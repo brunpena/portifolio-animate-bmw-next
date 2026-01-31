@@ -4,7 +4,7 @@ export default function ExampleSection() {
   return (
     <section
       id="scroll-section"
-      className="relative h-[800vh] bg-black"
+      className="relative h-[800vh] bg-black rounded-t-[200px] overflow-hidden"
     >
       {/* Canvas fixo (visual) */}
       <canvas className="fixed inset-0 w-full h-full z-0" />
