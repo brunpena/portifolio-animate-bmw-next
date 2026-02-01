@@ -19,7 +19,6 @@ export function useBmwScrollAnimation(onLoaded?: () => void) {
     gsap.ticker.lagSmoothing(0)
 
     /* -------------------- ELEMENTOS -------------------- */
-    const header = document.querySelector('header') as HTMLElement | null
     const heroImg = document.querySelector('.hero-img') as HTMLElement | null
     const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
     if (!canvas) return
@@ -40,10 +39,10 @@ export function useBmwScrollAnimation(onLoaded?: () => void) {
     setCanvasSize()
 
     /* -------------------- FRAMES -------------------- */
-    const frameCount = 695
+    const frameCount = 429
 
     const getFrameSrc = (i: number) =>
-      `/selected-frames/frame_${String(i).padStart(5, '0')}.jpeg`
+      `/selected-frames/frame_${String(i).padStart(5, '0')}.webp`
 
     const state = { frame: 0 }
 
@@ -131,14 +130,6 @@ export function useBmwScrollAnimation(onLoaded?: () => void) {
             if (frame !== state.frame) {
               state.frame = frame
               loadFrame(frame)
-            }
-
-            if (header) {
-              const p = gsap.utils.clamp(0, 1, (progress - 0.15) / 0.2)
-              gsap.set(header, {
-                y: -120 * p,
-                opacity: 1 - p,
-              })
             }
 
             if (heroImg) {

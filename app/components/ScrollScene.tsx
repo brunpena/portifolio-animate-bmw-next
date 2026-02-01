@@ -1,25 +1,22 @@
 'use client'
 
+import { useRef } from 'react'
 import { useBmwScrollAnimation } from '../hooks/useBmwScrollAnimation'
 
-interface ScrollSceneProps {
-  onLoaded: () => void
-}
+export default function ScrollScene() {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
-export default function ScrollScene({ onLoaded }: ScrollSceneProps) {
-  useBmwScrollAnimation(onLoaded)
+  useBmwScrollAnimation(canvasRef)
 
   return (
     <section
       id="scroll-section"
       className="relative h-[800vh] w-full overflow-hidden"
     >
-      <canvas className="fixed inset-0 w-full h-full" />
-
-      <header className="absolute top-1/2 left-1/2 z-10">
-      </header>
-
-      
+      <canvas
+        ref={canvasRef}
+        className="fixed inset-0 w-full h-full"
+      />
     </section>
   )
 }
