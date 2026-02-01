@@ -17,7 +17,6 @@ export default function ScrollScene({ onLoaded }: ScrollSceneProps) {
       <canvas className="fixed inset-0 w-full h-full" />
 
       <header className="absolute top-1/2 left-1/2 z-10">
-        <h1>BMW EXPERIENCE</h1>
       </header>
 
       

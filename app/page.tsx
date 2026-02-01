@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import LoadingScreen from './components/loadingScreen'
 import ScrollScene from './components/ScrollScene'
-import ExampleSection from './components/sectionExample'
+import { Header } from './components/header'
 
 export default function Page() {
   const [loaded, setLoaded] = useState(false)
@@ -11,6 +11,7 @@ export default function Page() {
 
   return (
     <>
+    <Header />
       {showLoading && (
         <LoadingScreen
           isDone={loaded}
@@ -19,7 +20,6 @@ export default function Page() {
       )}
 
       <ScrollScene onLoaded={() => setLoaded(true)} />
-      <ExampleSection />
     </>
   )
 }

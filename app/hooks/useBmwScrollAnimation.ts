@@ -11,7 +11,7 @@ export function useBmwScrollAnimation(onLoaded?: () => void) {
 
     /* -------------------- LENIS -------------------- */
     const lenis = new Lenis()
-    lenis.on('scroll', ScrollTrigger.update)
+    lenis.on('scroll', () => ScrollTrigger.update())
 
     gsap.ticker.add((time) => {
       lenis.raf(time * 1000)
@@ -19,169 +19,158 @@ export function useBmwScrollAnimation(onLoaded?: () => void) {
     gsap.ticker.lagSmoothing(0)
 
     /* -------------------- ELEMENTOS -------------------- */
-    const nav = document.querySelector('nav') as HTMLElement | null
     const header = document.querySelector('header') as HTMLElement | null
     const heroImg = document.querySelector('.hero-img') as HTMLElement | null
     const canvas = document.querySelector('canvas') as HTMLCanvasElement | null
-
     if (!canvas) return
 
-    const context = canvas.getContext('2d')
-    if (!context) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
     /* -------------------- CANVAS SIZE -------------------- */
     const setCanvasSize = () => {
-      const pixelRatio = window.devicePixelRatio || 1
-
-      canvas.width = window.innerWidth * pixelRatio
-      canvas.height = window.innerHeight * pixelRatio
-
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.25) // 🔥 LIMITADO
+      canvas.width = window.innerWidth * dpr
+      canvas.height = window.innerHeight * dpr
       canvas.style.width = `${window.innerWidth}px`
       canvas.style.height = `${window.innerHeight}px`
-
-      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
     setCanvasSize()
 
     /* -------------------- FRAMES -------------------- */
-    const frameCount = 695 // frame_00000 até frame_00694
+    const frameCount = 695
 
-    const currentFrame = (index: number) =>
-      `/selected-frames/frame_${String(index).padStart(5, '0')}.jpeg`
+    const getFrameSrc = (i: number) =>
+      `/selected-frames/frame_${String(i).padStart(5, '0')}.jpeg`
 
-    const images: HTMLImageElement[] = []
-    const videoFrames = { frame: 0 }
-    let imagesToLoad = frameCount
+    const state = { frame: 0 }
+
+    /* -------------------- BITMAPS (MEMÓRIA CONTROLADA) -------------------- */
+    let currentBitmap: ImageBitmap | null = null
+    let previousBitmap: ImageBitmap | null = null
+    let loading = false
+
+    /* -------------------- LOAD FRAME (1 BITMAP ATIVO) -------------------- */
+    const loadFrame = async (index: number) => {
+      if (index < 0 || index >= frameCount) return
+      if (loading) return
+
+      loading = true
+
+      try {
+        const res = await fetch(getFrameSrc(index))
+        const blob = await res.blob()
+        const bitmap = await createImageBitmap(blob)
+
+        // libera o anterior
+        if (previousBitmap) previousBitmap.close()
+        previousBitmap = currentBitmap
+
+        currentBitmap = bitmap
+        render()
+      } catch (e) {
+        console.warn('Erro ao carregar frame', index)
+      } finally {
+        loading = false
+      }
+    }
 
     /* -------------------- RENDER -------------------- */
     const render = () => {
-      const img = images[videoFrames.frame]
-      if (!img || !img.complete || img.naturalWidth === 0) return
+      const img = currentBitmap || previousBitmap
+      if (!img) return
 
-      const canvasWidth = window.innerWidth
-      const canvasHeight = window.innerHeight
+      const cw = window.innerWidth
+      const ch = window.innerHeight
 
-      context.clearRect(0, 0, canvasWidth, canvasHeight)
+      ctx.clearRect(0, 0, cw, ch)
 
-      const imageAspect = img.naturalWidth / img.naturalHeight
-      const canvasAspect = canvasWidth / canvasHeight
+      const imgAspect = img.width / img.height
+      const canvasAspect = cw / ch
 
-      let drawWidth, drawHeight, drawX, drawY
+      let w, h, x, y
 
-      if (imageAspect > canvasAspect) {
-        drawHeight = canvasHeight
-        drawWidth = drawHeight * imageAspect
-        drawX = (canvasWidth - drawWidth) / 2
-        drawY = 0
+      if (imgAspect > canvasAspect) {
+        h = ch
+        w = h * imgAspect
+        x = (cw - w) / 2
+        y = 0
       } else {
-        drawWidth = canvasWidth
-        drawHeight = drawWidth / imageAspect
-        drawX = 0
-        drawY = (canvasHeight - drawHeight) / 2
+        w = cw
+        h = w / imgAspect
+        x = 0
+        y = (ch - h) / 2
       }
 
-      context.drawImage(img, drawX, drawY, drawWidth, drawHeight)
+      ctx.drawImage(img, x, y, w, h)
     }
 
-    /* -------------------- SCROLL TRIGGER -------------------- */
-    const setupScrollTrigger = () => {
-      let lastFrame = -1
+    /* -------------------- INIT -------------------- */
+    state.frame = 0
 
-      ScrollTrigger.create({
-        trigger: canvas,
-        start: 'top top',
+    loadFrame(0).then(() => {
+      requestAnimationFrame(() => {
+        render()
 
-        // 🔥 espaço extra após o último frame
-        end: `+=${frameCount * 10 + 1000}`,
+        ScrollTrigger.create({
+          trigger: canvas,
+          start: 'top top',
+          end: `+=${frameCount * 10 + 1000}`,
+          pin: true,
+          scrub: true,
 
-        pin: true,
-        scrub: true,
+          onUpdate(self) {
+            const progress = gsap.utils.clamp(0, 1, self.progress)
+            const frame = Math.min(
+              frameCount - 1,
+              Math.floor(progress * frameCount)
+            )
 
-        onUpdate(self) {
-          // 🔒 clamp do progresso
-          const progress = Math.max(0, Math.min(1, self.progress))
+            if (frame !== state.frame) {
+              state.frame = frame
+              loadFrame(frame)
+            }
 
-          // 🔒 clamp do frame (NUNCA passa do último)
-          const frame = Math.min(
-            frameCount - 1,
-            Math.floor(progress * frameCount)
-          )
+            if (header) {
+              const p = gsap.utils.clamp(0, 1, (progress - 0.15) / 0.2)
+              gsap.set(header, {
+                y: -120 * p,
+                opacity: 1 - p,
+              })
+            }
 
-          if (frame !== lastFrame) {
-            videoFrames.frame = frame
-            render()
-            lastFrame = frame
-          }
+            if (heroImg) {
+              gsap.set(heroImg, {
+                opacity: progress >= 0.6 ? 0 : 1,
+              })
+            }
+          },
+        })
 
-          /* -------- NAV -------- */
-          if (nav) {
-            gsap.set(nav, {
-              opacity: progress < 0.1 ? progress / 0.1 : 0,
-            })
-          }
-
-          /* -------- HEADER -------- */
-          if (header && progress >= 0.25) {
-            const z = (progress / 0.25) * -500
-            const opacity =
-              progress > 0.2
-                ? 1 - Math.min((progress - 0.2) / 0.05, 1)
-                : 1
-
-            gsap.set(header, {
-              transform: `translate(-50%, -50%) translateZ(${z}px)`,
-              opacity,
-            })
-          }
-
-          /* -------- HERO IMAGE -------- */
-          if (heroImg) {
-            gsap.set(heroImg, {
-              opacity: progress >= 0.6 ? 0 : 1,
-              transform:
-                progress >= 0.6
-                  ? 'translateZ(1000px)'
-                  : 'translateZ(0px)',
-            })
-          }
-        },
+        ScrollTrigger.refresh(true)
+        onLoaded?.()
       })
-    }
-
-    /* -------------------- PRELOAD -------------------- */
-    for (let i = 0; i < frameCount; i++) {
-      const img = new Image()
-      img.src = currentFrame(i)
-
-      img.onload = () => {
-        imagesToLoad--
-        if (imagesToLoad === 0) {
-          render()
-          setupScrollTrigger()
-          onLoaded?.()
-        }
-      }
-
-      img.onerror = () => {
-        console.warn('Frame não encontrado:', img.src)
-        imagesToLoad--
-      }
-
-      images.push(img)
-    }
+    })
 
     /* -------------------- RESIZE -------------------- */
-    window.addEventListener('resize', () => {
+    const onResize = () => {
       setCanvasSize()
       render()
       ScrollTrigger.refresh()
-    })
+    }
+
+    window.addEventListener('resize', onResize)
 
     /* -------------------- CLEANUP -------------------- */
     return () => {
       lenis.destroy()
       ScrollTrigger.killAll()
+      window.removeEventListener('resize', onResize)
+
+      if (currentBitmap) currentBitmap.close()
+      if (previousBitmap) previousBitmap.close()
     }
   }, [])
 }
