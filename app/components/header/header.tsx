@@ -28,8 +28,7 @@ export function Header() {
           <div
             className="
               absolute inset-0
-              backdrop-blur-sm
-              bg-white/10
+              backdrop-blur-[5px]
               border border-white/10
               rounded-full
               shadow-[0_4px_30px_rgba(0,0,0,0.15)]

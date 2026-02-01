@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronDown } from 'lucide-react'
-
+import Link from 'next/link'
 
 type MenuItem = {
   label: string
@@ -28,32 +28,50 @@ const menuItems: MenuItem[] = [
 
         <div className='buttons flex flex-col justify-between w-[57%] h-full overflow-hidden space-y-[2%] '>
 
-          <div className="flex w-full h-[30%] bg-[#ffeeff]/60 border border-black/30 rounded-2xl">
+          <Link
+            href="/about-us"
+            className="flex w-full h-[30%] bg-[#ffeeff]/60 border border-black/30 rounded-2xl
+                      hover:bg-[#c1c0c1] transition cursor-pointer"
+          >
             <div className="flex px-7 py-2 justify-center flex-col items-start w-full h-full">
-              <h2 className="text-lg font-semibold text-center text-black/70">
+              <h2 className="text-lg font-semibold text-black/70">
                 About Us
               </h2>
-              <p className="text-sm text-black/50">Learn more about our company and values</p>
+              <p className="text-sm text-black/50">
+                Learn more about our company and values
+              </p>
             </div>
-          </div>
+          </Link>
 
-          <div className="flex w-full h-[32%] bg-[#ffeeff]/60 border border-black/30 rounded-2xl">
+          <Link
+            href="/bmw-brazil"
+            className="flex w-full h-[30%] bg-[#ffeeff]/60 border border-black/30 rounded-2xl
+                      hover:bg-[#c1c0c1] transition cursor-pointer"
+          >
             <div className="flex px-7 py-2 justify-center flex-col items-start w-full h-full">
-              <h2 className="text-lg font-semibold text-center text-black/50">
+              <h2 className="text-lg font-semibold text-black/70">
                 BMW Brazilian Group
               </h2>
-              <p className="text-sm text-black/50">Explore our presence in Brazil</p>
+              <p className="text-sm text-black/50">
+                Explore our presence in Brazil
+              </p>
             </div>
-          </div>
-          
-          <div className="flex w-full h-[32%] bg-[#ffeeff]/60 border border-black/30 rounded-2xl">
+          </Link>
+
+          <Link
+            href="/culture-events"
+            className="flex w-full h-[30%] bg-[#ffeeff]/60 border border-black/30 rounded-2xl
+                      hover:bg-[#c1c0c1] transition cursor-pointer"
+          >
             <div className="flex px-7 py-2 justify-center flex-col items-start w-full h-full">
-              <h2 className="text-lg font-semibold text-center text-black/50">
+              <h2 className="text-lg font-semibold text-black/70">
                 Culture & Events
               </h2>
-              <p className="text-sm text-black/50">Discover our cultural initiatives and events</p>
+              <p className="text-sm text-black/50">
+                Discover our cultural initiatives and events
+              </p>
             </div>
-          </div>
+          </Link>
 
         </div>
       </div>
@@ -94,9 +112,9 @@ export default function FloatingMenu() {
               className="
                 absolute top-5
                 left-1/2 -translate-x-1/2   
-                backdrop-blur-sm     
+                backdrop-blur-[5px]    
                 w-[40vw] h-[40vh]
-                border border-white/20
+                border border-white/10
                 rounded-3xl
                 shadow-[0_10px_40px_rgba(0,0,0,0.4)]
                 m-6
