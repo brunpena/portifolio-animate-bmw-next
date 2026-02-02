@@ -58,7 +58,6 @@ export function useBmwScrollAnimation(
       if (index < 0 || index >= frameCount) return
 
       loading = true
-
       try {
         const res = await fetch(getFrameSrc(index))
         const blob = await res.blob()
@@ -74,8 +73,6 @@ export function useBmwScrollAnimation(
         currentBitmap = bitmap
 
         render()
-      } catch {
-        console.warn('Erro ao carregar frame', index)
       } finally {
         loading = false
       }
@@ -115,6 +112,13 @@ export function useBmwScrollAnimation(
     loadFrame(0).then(() => {
       if (destroyed) return
 
+      // estado inicial do Topics
+      gsap.set('#topics', {
+        autoAlpha: 0,
+        y: 50,
+        pointerEvents: 'none',
+      })
+
       ScrollTrigger.create({
         trigger: canvas,
         start: 'top top',
@@ -124,14 +128,66 @@ export function useBmwScrollAnimation(
 
         onUpdate(self) {
           const progress = gsap.utils.clamp(0, 1, self.progress)
-          const frame = Math.min(
-            frameCount - 1,
-            Math.floor(progress * frameCount)
-          )
+          const frame = Math.floor(progress * (frameCount - 1))
 
           if (frame !== state.frame) {
             state.frame = frame
             loadFrame(frame)
+          }
+
+          /* -------- TOPICS -------- */
+          const enterStart = 0.15
+          const enterEnd   = 0.25
+
+          const exitStart  = 0.35
+          const exitEnd    = 0.45
+
+          /* ---------- ENTRADA ---------- */
+          if (progress < enterStart) {
+            gsap.set('#topics', {
+              autoAlpha: 0,
+              y: 80,
+              pointerEvents: 'none',
+            })
+          }
+
+          else if (progress >= enterStart && progress <= enterEnd) {
+            const p = (progress - enterStart) / (enterEnd - enterStart)
+
+            gsap.set('#topics', {
+              autoAlpha: p,
+              y: 80 - p * 80,
+              pointerEvents: 'auto',
+            })
+          }
+
+          /* ---------- VISÍVEL ---------- */
+          else if (progress > enterEnd && progress < exitStart) {
+            gsap.set('#topics', {
+              autoAlpha: 1,
+              y: 0,
+              pointerEvents: 'auto',
+            })
+          }
+
+          /* ---------- SAÍDA ---------- */
+          else if (progress >= exitStart && progress <= exitEnd) {
+            const p = (progress - exitStart) / (exitEnd - exitStart)
+
+            gsap.set('#topics', {
+              autoAlpha: 1 - p,
+              y: -p * 80,
+              pointerEvents: 'none',
+            })
+          }
+
+          /* ---------- DEPOIS ---------- */
+          else {
+            gsap.set('#topics', {
+              autoAlpha: 0,
+              y: -80,
+              pointerEvents: 'none',
+            })
           }
         },
       })
@@ -152,13 +208,9 @@ export function useBmwScrollAnimation(
     /* -------------------- CLEANUP -------------------- */
     return () => {
       destroyed = true
-
       lenis.destroy()
       ScrollTrigger.getAll().forEach(t => t.kill())
-      gsap.killTweensOf(canvas)
-
       window.removeEventListener('resize', onResize)
-
       currentBitmap?.close()
       previousBitmap?.close()
     }

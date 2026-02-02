@@ -2,6 +2,7 @@
 
 import { useRef } from 'react'
 import { useBmwScrollAnimation } from '../hooks/useBmwScrollAnimation'
+import { Topics } from './topics'
 
 export default function ScrollScene() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -15,8 +16,11 @@ export default function ScrollScene() {
     >
       <canvas
         ref={canvasRef}
-        className="fixed inset-0 w-full h-full"
+        className="fixed inset-0 w-full h-full z-0"
       />
+
+      <Topics />
+
     </section>
   )
 }
